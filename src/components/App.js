@@ -21,8 +21,10 @@ class App extends Component {
         console.log('accounts: ', accounts);
         const [account] = accounts;
         const balance = await web3.eth.getBalance(account);
+        console.log('balance: ', balance);
+        const etherBalance = await web3.utils.fromWei(balance);
         if (typeof account !== 'undefined') {
-          this.setState({ account, balance, web3 });
+          this.setState({ account, balance: etherBalance, web3 });
         } else {
           window.alert('Please login with MetaMask');
         }
@@ -34,8 +36,20 @@ class App extends Component {
           dBank.abi,
           dBank.networks[netId].address,
         );
+        const amountDeposited = await web3.utils.fromWei(
+          await dBankContract.methods.etherBalanceOf(account).call(),
+        );
+        const test = await web3.utils.fromWei(
+          await dBankContract.methods.getBlockTime().call(),
+        );
+        const test2 = await web3.utils.fromWei(
+          await dBankContract.methods.depositStart(account).call(),
+        );
+        console.log({ test, test2 });
+        console.log('amountDeposited: ', amountDeposited);
         this.setState({
           token: tokenContract,
+          amountDeposited,
           dbank: dBankContract,
           dBankAddress: dBank.networks[netId].address,
         });
@@ -75,6 +89,8 @@ class App extends Component {
       token: null,
       dbank: null,
       balance: 0,
+      interest: 0,
+      amountDeposited: 0,
       dBankAddress: null,
     };
   }
@@ -96,7 +112,12 @@ class App extends Component {
         <div className="container-fluid mt-5 text-center">
           <br></br>
           <h1>Welcome to dBank</h1>
-          <h2>{this.state.account}</h2>
+          <p>Your wallet: {this.state.account}</p>
+          <h4>{this.state.balance} ETH</h4>
+          <h6>
+            Earning 10% interest on {this.state.amountDeposited} ETH (paid in
+            DBC token)
+          </h6>
           <br></br>
           <div className="row">
             <main role="main" className="col-lg-12 d-flex text-center">
@@ -153,7 +174,6 @@ class App extends Component {
                       <br></br>
                     </div>
                   </Tab>
-                  {/*add Tab withdraw*/}
                 </Tabs>
               </div>
             </main>
